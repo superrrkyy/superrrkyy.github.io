@@ -67,6 +67,15 @@ export const projects: Project[] = [
     featured: true,
   },
   {
+    title: "CuacaKu",
+    desc: "Aplikasi cuaca real-time: prakiraan 24 jam & 7 hari, cari kota, lokasi GPS, favorit, dan latar dinamis.",
+    image: `${RAW}/cuacaku/HEAD/assets/banner.svg`,
+    tags: ["React", "TypeScript", "Tailwind", "Open-Meteo"],
+    repo: "https://github.com/superrrkyy/cuacaku",
+    demo: "https://superrrkyy.github.io/cuacaku/",
+    featured: true,
+  },
+  {
     title: "axybot Core V5",
     desc: "Framework bot WhatsApp modular: command otomatis termuat, permission owner/admin/premium, dan SQLite.",
     image: `${RAW}/axybot/HEAD/assets/banner.svg`,
