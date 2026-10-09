@@ -161,7 +161,7 @@ function Hero() {
         <div className="reveal mt-14 grid max-w-lg grid-cols-3 gap-6">
           {[
             [String(projects.length), "Proyek unggulan"],
-            ["3", "Website live"],
+            [String(projects.filter((p) => p.demo).length), "Website live"],
             [String(guides.length), "Panduan"],
           ].map(([n, l]) => (
             <div key={l}>
