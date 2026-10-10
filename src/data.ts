@@ -83,6 +83,15 @@ export const projects: Project[] = [
     repo: "https://github.com/superrrkyy/axybot",
     featured: true,
   },
+    {
+    title: "AnimeKu",
+    desc: "Katalog anime: trending, pencarian, jadwal tayang 7 hari, daftar episode & link nonton resmi, trailer, dan pelacak progres nonton.",
+    image: `${RAW}/animeku/HEAD/assets/banner.svg`,
+    tags: ["React", "TypeScript", "Tailwind", "AniList"],
+    repo: "https://github.com/superrrkyy/animeku",
+    demo: "https://superrrkyy.github.io/animeku/",
+    featured: true,
+  },  
   {
     title: "Flask API",
     desc: "REST API dengan autentikasi API key, CRUD lengkap, dan penyimpanan SQLite.",
