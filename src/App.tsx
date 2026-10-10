@@ -1,5 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { about, guides, profile, projects, stack } from "./data";
+
+/* ---------- util ---------- */
+const prefersReduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const canHover = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
 /* ---------- hooks ---------- */
 function useReveal() {
@@ -44,7 +48,192 @@ function useTyping(words: string[]) {
   return text;
 }
 
-/* ---------- icons ---------- */
+/* ---------- efek sorot & miring ---------- */
+function onSpot(e: MouseEvent<HTMLElement>) {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+}
+
+function onTilt(e: MouseEvent<HTMLElement>) {
+  if (!canHover() || prefersReduced()) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width - 0.5;
+  const y = (e.clientY - r.top) / r.height - 0.5;
+  e.currentTarget.style.transform =
+    `perspective(900px) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg) translateY(-4px)`;
+}
+
+function onTiltEnd(e: MouseEvent<HTMLElement>) {
+  e.currentTarget.style.transform = "";
+}
+
+/* ---------- bar progres scroll ---------- */
+function ScrollProgress() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const p = h > 0 ? window.scrollY / h : 0;
+      if (ref.current) ref.current.style.transform = `scaleX(${p})`;
+    };
+    const queue = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    return () => {
+      window.removeEventListener("scroll", queue);
+      window.removeEventListener("resize", queue);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-violet-500 via-fuchsia-400 to-cyan-400"
+      style={{ transform: "scaleX(0)" }}
+    />
+  );
+}
+
+/* ---------- latar partikel jaringan (canvas ringan) ---------- */
+function ParticleField() {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const reduced = prefersReduced();
+
+    type P = { x: number; y: number; vx: number; vy: number; r: number };
+    let w = 0;
+    let h = 0;
+    let pts: P[] = [];
+    let raf = 0;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      const max = 120;
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const a = pts[i];
+          const b = pts[j];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d < max) {
+            ctx.strokeStyle = `rgba(167,139,250,${((1 - d / max) * 0.3).toFixed(3)})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+      ctx.fillStyle = "rgba(196,181,253,0.85)";
+      for (const p of pts) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+
+    const step = () => {
+      for (const p of pts) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+      }
+      draw();
+      raf = requestAnimationFrame(step);
+    };
+
+    const start = () => {
+      if (!raf && !reduced && !document.hidden) raf = requestAnimationFrame(step);
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      w = rect.width;
+      h = rect.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.min(90, Math.round((w * h) / 16000));
+      pts = Array.from({ length: count }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 1.6 + 0.6,
+      }));
+      if (reduced) draw();
+    };
+
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+    const io = new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()));
+    io.observe(canvas);
+    const onVis = () => (document.hidden ? stop() : start());
+    document.addEventListener("visibilitychange", onVis);
+    resize();
+    start();
+
+    return () => {
+      stop();
+      ro.disconnect();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  return <canvas ref={ref} aria-hidden className="absolute inset-0 h-full w-full opacity-70" />;
+}
+
+/* ---------- angka yang naik saat terlihat ---------- */
+function Counter({ to, label }: { to: number; label: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      if (prefersReduced()) return setN(to);
+      const start = performance.now();
+      const dur = 1400;
+      const tick = (t: number) => {
+        const k = Math.min(1, (t - start) / dur);
+        setN(Math.round(to * (1 - Math.pow(1 - k, 3))));
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [to]);
+  return (
+    <div ref={ref}>
+      <div className="text-3xl font-extrabold tabular-nums text-white">{n}</div>
+      <div className="mt-1 font-mono text-[11px] uppercase tracking-widest text-slate-500">{label}</div>
+    </div>
+  );
+}
+
+/* ---------- ikon ---------- */
 const Icon = {
   github: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
@@ -69,13 +258,14 @@ const Icon = {
   ),
 };
 
-/* ---------- small components ---------- */
+/* ---------- komponen kecil ---------- */
 function Section({ id, label, title, children }: { id: string; label: string; title: ReactNode; children: ReactNode }) {
   return (
     <section id={id} className="relative mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:py-28">
       <div className="reveal mb-12">
         <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-violet-400">{label}</p>
         <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{title}</h2>
+        <div className="heading-line mt-5 h-px w-24 origin-left bg-gradient-to-r from-violet-400 to-transparent" />
       </div>
       {children}
     </section>
@@ -96,7 +286,7 @@ function Navbar() {
   useEffect(() => {
     const f = () => setScrolled(window.scrollY > 20);
     f();
-    window.addEventListener("scroll", f);
+    window.addEventListener("scroll", f, { passive: true });
     return () => window.removeEventListener("scroll", f);
   }, []);
   return (
@@ -129,12 +319,13 @@ function Navbar() {
   );
 }
 
-/* ---------- sections ---------- */
+/* ---------- bagian utama ---------- */
 function Hero() {
   const typed = useTyping(profile.typing);
   return (
-    <section id="top" className="relative flex min-h-[100svh] items-center overflow-hidden">
+    <section id="top" onPointerMove={onSpot} className="spot relative flex min-h-[100svh] items-center overflow-hidden">
       <div className="grid-bg absolute inset-0" />
+      <ParticleField />
       <div className="blob left-[-10%] top-[10%] h-[420px] w-[420px] bg-violet-600" />
       <div className="blob bottom-[-10%] right-[-10%] h-[380px] w-[380px] bg-cyan-500" style={{ animationDelay: "-6s" }} />
       <div className="relative mx-auto w-full max-w-6xl px-5 pt-20">
@@ -144,7 +335,11 @@ function Hero() {
         </div>
         <h1 className="reveal text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-7xl">
           Halo, saya <br />
-          <span className="grad-text">{profile.name}</span>
+          <span className="grad-text">
+            {profile.name.split("").map((c, i) => (
+              <span key={i} className="letter" style={{ animationDelay: `${0.3 + i * 0.07}s` }}>{c}</span>
+            ))}
+          </span>
         </h1>
         <p className="reveal mt-6 h-8 font-mono text-lg text-violet-300 sm:text-2xl">
           {typed}<span className="caret" />
@@ -159,19 +354,31 @@ function Hero() {
           </a>
         </div>
         <div className="reveal mt-14 grid max-w-lg grid-cols-3 gap-6">
-          {[
-            [String(projects.length), "Proyek unggulan"],
-            [String(projects.filter((p) => p.demo).length), "Website live"],
-            [String(guides.length), "Panduan"],
-          ].map(([n, l]) => (
-            <div key={l}>
-              <div className="text-3xl font-extrabold text-white">{n}</div>
-              <div className="mt-1 font-mono text-[11px] uppercase tracking-widest text-slate-500">{l}</div>
-            </div>
-          ))}
+          <Counter to={projects.length} label="Proyek" />
+          <Counter to={projects.filter((p) => p.demo).length} label="Website live" />
+          <Counter to={guides.length} label="Panduan" />
         </div>
       </div>
     </section>
+  );
+}
+
+function Ticker() {
+  return (
+    <div className="ticker border-y border-white/5 py-5" aria-label="Teknologi yang saya pakai">
+      <div className="ticker-track flex w-max">
+        {[0, 1].map((k) => (
+          <div key={k} className="flex shrink-0 gap-10 pr-10" aria-hidden={k === 1}>
+            {stack.map((s) => (
+              <span key={`${k}-${s.name}`} className="flex items-center gap-3 whitespace-nowrap font-mono text-sm uppercase tracking-[0.2em] text-slate-500">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color, boxShadow: `0 0 10px ${s.color}` }} />
+                {s.name}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -180,7 +387,7 @@ function About() {
     <Section id="tentang" label="01 — Tentang" title={<>Apa yang saya <span className="grad-text">kerjakan</span></>}>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {about.map((a, i) => (
-          <div key={a.title} className="reveal glass group rounded-2xl p-6 transition hover:-translate-y-1 hover:border-violet-400/50" style={{ transitionDelay: `${i * 80}ms` }}>
+          <div key={a.title} onPointerMove={onSpot} className="reveal spot glass group rounded-2xl p-6 transition hover:-translate-y-1 hover:border-violet-400/50" style={{ transitionDelay: `${i * 80}ms` }}>
             <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-violet-500/10 text-2xl transition group-hover:scale-110">{a.icon}</div>
             <h3 className="mb-2 font-bold text-white">{a.title}</h3>
             <p className="text-sm leading-relaxed text-slate-400">{a.text}</p>
@@ -226,7 +433,12 @@ function Projects() {
     <Section id="proyek" label="03 — Proyek" title={<>Karya <span className="grad-text">pilihan</span></>}>
       <div className="grid gap-6 md:grid-cols-2">
         {projects.map((p, i) => (
-          <article key={p.title} className={`reveal glass group flex flex-col overflow-hidden rounded-3xl transition hover:-translate-y-1 hover:border-violet-400/50 hover:shadow-2xl hover:shadow-violet-500/10 ${p.featured && i === 0 ? "md:col-span-2" : ""}`}>
+          <article
+            key={p.title}
+            onPointerMove={(e) => { onSpot(e); onTilt(e); }}
+            onPointerLeave={onTiltEnd}
+            className={`reveal spot tilt glass group flex flex-col overflow-hidden rounded-3xl hover:border-violet-400/50 hover:shadow-2xl hover:shadow-violet-500/10 ${p.featured && i === 0 ? "md:col-span-2" : ""}`}
+          >
             <div className="relative overflow-hidden bg-panel">
               <img src={p.image} alt={p.title} loading="lazy" className="aspect-[15/4] w-full object-cover transition duration-700 group-hover:scale-105" />
               {p.demo && (
@@ -266,7 +478,7 @@ function Guides() {
     <Section id="panduan" label="04 — Edukasi" title={<>Panduan <span className="grad-text">gratis</span></>}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {guides.map((g, i) => (
-          <a key={g.title} href={g.url} target="_blank" rel="noreferrer" className="reveal glass group flex items-start gap-4 rounded-2xl p-5 transition hover:-translate-y-1 hover:border-violet-400/50" style={{ transitionDelay: `${i * 60}ms` }}>
+          <a key={g.title} href={g.url} target="_blank" rel="noreferrer" onPointerMove={onSpot} className="reveal spot glass group flex items-start gap-4 rounded-2xl p-5 transition hover:-translate-y-1 hover:border-violet-400/50" style={{ transitionDelay: `${i * 60}ms` }}>
             <span className="text-2xl">{g.icon}</span>
             <div className="flex-1">
               <h3 className="font-semibold text-white">{g.title}</h3>
@@ -289,14 +501,14 @@ function Contact() {
   ];
   return (
     <Section id="kontak" label="05 — Kontak" title={<>Mari <span className="grad-text">terhubung</span></>}>
-      <div className="reveal glass relative overflow-hidden rounded-3xl p-8 sm:p-12">
+      <div className="reveal beam glass relative overflow-hidden rounded-3xl p-8 sm:p-12">
         <div className="blob right-[-20%] top-[-40%] h-[300px] w-[300px] bg-violet-600" />
         <p className="relative max-w-xl text-lg text-slate-300">
           Punya ide proyek, ingin berkolaborasi, atau sekadar menyapa? Pesanmu selalu saya tunggu. 👋
         </p>
         <div className="relative mt-8 grid gap-4 sm:grid-cols-2">
           {links.map((l) => (
-            <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/30 p-4 transition hover:border-violet-400 hover:bg-violet-500/10">
+            <a key={l.label} href={l.href} target="_blank" rel="noreferrer" onPointerMove={onSpot} className="spot flex items-center gap-4 rounded-2xl border border-white/10 bg-black/30 p-4 transition hover:border-violet-400 hover:bg-violet-500/10">
               <span className="grid h-11 w-11 place-items-center rounded-xl bg-violet-500/15 text-violet-300">{l.icon}</span>
               <div className="min-w-0">
                 <div className="font-semibold text-white">{l.label}</div>
@@ -314,9 +526,11 @@ export default function App() {
   useReveal();
   return (
     <div className="relative overflow-x-hidden">
+      <ScrollProgress />
       <Navbar />
       <main>
         <Hero />
+        <Ticker />
         <About />
         <Skills />
         <Projects />
