@@ -67,13 +67,37 @@ export const projects: Project[] = [
     featured: true,
   },
   {
+    title: "NadaKu",
+    desc: "Pemutar musik: lagu penuh gratis dari Audius dan katalog iTunes. Cari, antrean, acak, dan favorit.",
+    image: `${RAW}/nadaku/HEAD/assets/banner.svg`,
+    tags: ["React", "TypeScript", "Audius", "iTunes"],
+    repo: "https://github.com/superrrkyy/nadaku",
+    demo: "https://superrrkyy.github.io/nadaku/",
+    featured: true,
+  },
+  {
+    title: "CryptoKu",
+    desc: "Pantau harga kripto real-time dalam Rupiah: pasar, detail koin, watchlist, dan kalkulator konversi.",
+    image: `${RAW}/cryptoku/HEAD/assets/banner.svg`,
+    tags: ["React", "TypeScript", "CoinGecko"],
+    repo: "https://github.com/superrrkyy/cryptoku",
+    demo: "https://superrrkyy.github.io/cryptoku/",
+  },
+  {
     title: "CuacaKu",
     desc: "Aplikasi cuaca real-time: prakiraan 24 jam & 7 hari, cari kota, lokasi GPS, favorit, dan latar dinamis.",
     image: `${RAW}/cuacaku/HEAD/assets/banner.svg`,
     tags: ["React", "TypeScript", "Tailwind", "Open-Meteo"],
     repo: "https://github.com/superrrkyy/cuacaku",
     demo: "https://superrrkyy.github.io/cuacaku/",
-    featured: true,
+  },
+  {
+    title: "AnimeKu",
+    desc: "Katalog anime: trending, pencarian, jadwal tayang 7 hari, daftar episode & link nonton resmi, trailer, dan pelacak progres nonton.",
+    image: `${RAW}/animeku/HEAD/assets/banner.svg`,
+    tags: ["React", "TypeScript", "Tailwind", "AniList"],
+    repo: "https://github.com/superrrkyy/animeku",
+    demo: "https://superrrkyy.github.io/animeku/",
   },
   {
     title: "axybot Core V5",
@@ -83,15 +107,6 @@ export const projects: Project[] = [
     repo: "https://github.com/superrrkyy/axybot",
     featured: true,
   },
-    {
-    title: "AnimeKu",
-    desc: "Katalog anime: trending, pencarian, jadwal tayang 7 hari, daftar episode & link nonton resmi, trailer, dan pelacak progres nonton.",
-    image: `${RAW}/animeku/HEAD/assets/banner.svg`,
-    tags: ["React", "TypeScript", "Tailwind", "AniList"],
-    repo: "https://github.com/superrrkyy/animeku",
-    demo: "https://superrrkyy.github.io/animeku/",
-    featured: true,
-  },  
   {
     title: "Flask API",
     desc: "REST API dengan autentikasi API key, CRUD lengkap, dan penyimpanan SQLite.",
@@ -119,8 +134,5 @@ export const projects: Project[] = [
 
 export const guides = [
   { icon: "📱", title: "Termux Linux Distro Guide", desc: "Instal Ubuntu, Debian, Arch, Kali di Android", url: "https://github.com/superrrkyy/termux-linux-distro-guide" },
-  { icon: "🌐", title: "Panduan Web Development", desc: "HTML, CSS & JavaScript dari nol sampai mahir", url: "https://github.com/superrrkyy/panduan-web-development-" },
-  { icon: "🤖", title: "Cara Membuat Bot Telegram", desc: "Panduan langkah demi langkah", url: "https://github.com/superrrkyy/cara-membuat-bot-telegram-" },
-  { icon: "🛡️", title: "Mengenal Link Phishing", desc: "Edukasi keamanan digital", url: "https://github.com/superrrkyy/mengenal-link-phising" },
   { icon: "💡", title: "Belajar Coding Dasar", desc: "Dasar coding & jenis-jenis error", url: "https://github.com/superrrkyy/belajar-coding-dasar" },
 ];
