@@ -18,20 +18,41 @@
 
 ---
 
-> Website portofolio pribadi **AXRYZURE**: Web & Bot Developer dari Indonesia 🇮🇩. Menampilkan proyek, tech stack, panduan, dan kontak dalam satu halaman.
+> Website portofolio pribadi **AXRYZURE**: Web & Bot Developer dari Indonesia 🇮🇩. Menampilkan proyek, tech stack, panduan, dan kontak dalam satu halaman yang hidup.
 
 ### ✨ Fitur
 
-- ⌨️ **Efek mengetik** di bagian hero
-- 🌌 **Latar animasi**: grid, cahaya ungu-cyan, teks bergradasi
-- 🃏 **Kartu proyek** dengan banner, tag teknologi, tombol Demo & Kode
-- 🎬 **Animasi muncul saat scroll** (menghormati `prefers-reduced-motion`)
-- 📱 **Responsif** dengan menu mobile
+- ⌨️ **Efek mengetik** di bagian hero, bergantian antara beberapa peran
+- 🌌 **Latar partikel jaringan** di hero, dibuat dengan canvas ringan yang berhenti saat tidak terlihat
+- 🔤 **Nama muncul huruf per huruf** dengan teks bergradasi
+- 🔢 **Statistik yang naik** saat terlihat di layar
+- 🎞️ **Ticker teknologi** yang berjalan terus dan berhenti saat disorot
+- 🔦 **Sorot cahaya** yang mengikuti kursor atau jari di setiap kartu
+- 🃏 **Kartu proyek miring 3D** saat disorot dengan kursor (khusus desktop)
+- 📈 **Bar progres scroll** di bagian atas halaman
+- 🌀 **Garis berputar** mengelilingi kartu kontak
+- 🎬 **Animasi muncul saat scroll** untuk setiap bagian
+- ♿ **Menghormati `prefers-reduced-motion`**: semua animasi dimatikan dan konten tetap tampil
+- 📱 **Responsif** dengan menu mobile dan tanpa scroll ke samping
 - 🚀 **Auto deploy** ke GitHub Pages setiap push ke `main`
+
+### 🧭 Bagian Halaman
+
+| Bagian | Isi |
+|:--|:--|
+| 🏠 **Hero** | Nama, peran yang bergantian, tombol aksi, dan statistik |
+| 🎞️ **Ticker** | Deretan teknologi yang dipakai |
+| 👤 **Tentang** | Empat keunggulan dan contoh kode |
+| 🛠️ **Skill** | Tech stack dalam bentuk pil berwarna |
+| 🚀 **Proyek** | Kartu proyek dengan banner, tag, dan tombol Demo & Kode |
+| 📚 **Panduan** | Tautan ke panduan belajar gratis |
+| 📬 **Kontak** | Email, GitHub, Instagram, dan Telegram |
 
 ### ✏️ Mengubah Isi
 
 Semua teks, proyek, skill, dan kontak ada di satu file: **[`src/data.ts`](src/data.ts)**. Edit file itu saja, commit, dan website otomatis terupdate dalam 1–2 menit.
+
+Efek animasi bisa diatur di **[`src/index.css`](src/index.css)**, sedangkan struktur halaman dan komponen ada di **[`src/App.tsx`](src/App.tsx)**.
 
 ### 💻 Menjalankan Lokal
 
@@ -42,6 +63,12 @@ npm install
 npm run dev
 ```
 
+Build untuk produksi:
+
+```bash
+npm run build
+```
+
 <details>
 <summary><b>📁 Struktur</b></summary>
 <br>
@@ -49,9 +76,9 @@ npm run dev
 ```
 ├── .github/workflows/deploy.yml   # Auto deploy ke GitHub Pages
 ├── src/
-│   ├── App.tsx                    # Semua section & komponen
+│   ├── App.tsx                    # Semua section & komponen animasi
 │   ├── data.ts                    # ✏️ Isi website (edit di sini)
-│   ├── index.css                  # Animasi & gaya global
+│   ├── index.css                  # Animasi, efek sorot, & gaya global
 │   └── main.tsx
 ├── index.html
 ├── package.json
